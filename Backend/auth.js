@@ -253,8 +253,28 @@ function removeFavorite(userId, foodItemIndex, callback) {
 // Initialize database on module load
 initializeDatabase();
 
+// Reset password for a forgotten password (looked up by email)
+function resetPassword(email, newPassword, callback) {
+    const users = readUsers();
+    const userIndex = users.findIndex(u => u.email === email);
+
+    if (userIndex === -1) {
+        return callback({ error: 'No account found with that email' }, null);
+    }
+
+    users[userIndex].password_hash = hashPassword(newPassword);
+    users[userIndex].updated_at = new Date().toISOString();
+
+    if (writeUsers(users)) {
+        callback(null, { message: 'Password reset successfully' });
+    } else {
+        callback({ error: 'Failed to reset password' }, null);
+    }
+}
+
 module.exports = {
     registerUser,
+    resetPassword,
     loginUser,
     updateUserProfile,
     getUserProfile,

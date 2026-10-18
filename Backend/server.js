@@ -146,6 +146,25 @@ app.post('/api/auth/login', (req, res) => {
     });
 });
 
+app.post('/api/auth/reset-password', (req, res) => {
+    const { email, newPassword } = req.body;
+
+    if (!email || !newPassword) {
+        return res.status(400).json({ error: 'Email and new password are required' });
+    }
+
+    if (newPassword.length < 6) {
+        return res.status(400).json({ error: 'New password must be at least 6 characters' });
+    }
+
+    auth.resetPassword(email, newPassword, (err, result) => {
+        if (err) {
+            return res.status(404).json(err);
+        }
+        res.json(result);
+    });
+});
+
 app.put('/api/user/:userId/profile', (req, res) => {
     const userId = parseInt(req.params.userId);
     const profileData = req.body;
