@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'home_page.dart';
+import 'forgot_password_page.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
 
@@ -117,6 +118,17 @@ class _SignInScreenState extends State<SignInScreen> {
                 child: _isLoading
                     ? const CircularProgressIndicator(color: Colors.white)
                     : const Text('Sign In'),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ForgotPasswordPage(),
+                    ),
+                  );
+                },
+                child: const Text('Forgot password?'),
               ),
             ],
           ),
