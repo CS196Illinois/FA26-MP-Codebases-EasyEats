@@ -4,6 +4,7 @@ import 'settings_page.dart';
 import '../services/nutrition_service.dart';
 import '../services/user_service.dart';
 import '../models/meal_entry.dart';
+import '../widgets/meal_card.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -218,7 +219,10 @@ class _MainPageState extends State<MainPage> {
                       scrollDirection: Axis.horizontal,
                       child: Row(
                         children: _todayMeals.map((meal) {
-                          return _buildMealCard(meal);
+                          return MealCard(
+                            meal: meal,
+                            onDelete: () => _confirmDeleteMeal(meal),
+                          );
                         }).toList(),
                       ),
                     ),
@@ -329,64 +333,39 @@ class _MainPageState extends State<MainPage> {
     );
   }
 
-  Widget _buildMealCard(MealEntry meal) {
-    return Container(
-      width: 140,
-      margin: const EdgeInsets.only(right: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.shade200,
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+  Future<void> _confirmDeleteMeal(MealEntry meal) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete meal?'),
+        content: Text(
+          'Remove this ${meal.mealType} (${meal.totals.calories.toInt()} cal) '
+          'from today\'s log?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            meal.mealType,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            meal.diningHall,
-            style: TextStyle(
-              fontSize: 11,
-              color: Colors.grey[600],
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            "${meal.totals.calories.toInt()} cal",
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.green.shade700,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            "P: ${meal.totals.protein.toInt()}g",
-            style: TextStyle(fontSize: 11, color: Colors.grey[700]),
-          ),
-          Text(
-            "C: ${meal.totals.carbs.toInt()}g",
-            style: TextStyle(fontSize: 11, color: Colors.grey[700]),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
     );
+
+    if (confirmed != true || _userId == null) return;
+
+    try {
+      await NutritionService.deleteMeal(_userId!, meal.id);
+      await _loadData();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not delete meal: $e')),
+      );
+    }
   }
 
   Widget _buildTopButton(IconData icon, String label, {VoidCallback? onTap}) {
