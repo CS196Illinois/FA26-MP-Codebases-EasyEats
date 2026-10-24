@@ -1,30 +1,31 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:easyeats/main.dart';
+import 'package:easyeats/pages/dining_halls.dart';
+import 'package:easyeats/pages/favorites_page.dart';
+import 'package:easyeats/services/user_service.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('Tapping Favorites opens FavoritesPage', (WidgetTester tester) async {
+    // FavoritesPage pops itself when nobody is logged in.
+    await UserService.setCurrentUser(1, null);
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    await tester.pumpWidget(const MaterialApp(home: MainPage()));
+    expect(find.byType(FavoritesPage), findsNothing);
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
+    await tester.tap(find.text('Favorites'));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(find.byType(FavoritesPage), findsOneWidget);
+  });
+
+  testWidgets('Tapping History shows Coming soon', (WidgetTester tester) async {
+    await tester.pumpWidget(const MaterialApp(home: MainPage()));
+
+    await tester.tap(find.text('History'));
     await tester.pump();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.text('Coming soon'), findsOneWidget);
   });
 }

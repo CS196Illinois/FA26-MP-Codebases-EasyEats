@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'home_page.dart' as home;
 import 'settings_page.dart';
 import 'dining_hall_detail_page.dart';
+import 'favorites_page.dart';
 
 class MainPage extends StatelessWidget {
   const MainPage({super.key});
@@ -79,10 +80,15 @@ class MainPage extends StatelessWidget {
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: [
-                    _buildTopButton(Icons.favorite_border, "Favorites"),
-                    _buildTopButton(Icons.history, "History"),
-                    _buildTopButton(Icons.person_add_alt_1_outlined, "Following"),
-                    _buildTopButton(Icons.qr_code_scanner_outlined, "QR"),
+                    _buildTopButton(context, Icons.favorite_border, "Favorites", onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const FavoritesPage()),
+                      );
+                    }),
+                    _buildTopButton(context, Icons.history, "History"),
+                    _buildTopButton(context, Icons.person_add_alt_1_outlined, "Following"),
+                    _buildTopButton(context, Icons.qr_code_scanner_outlined, "QR"),
                   ],
                 ),
               ),
@@ -283,11 +289,14 @@ class MainPage extends StatelessWidget {
   }
 
   // Helper widget for top buttons
-  static Widget _buildTopButton(IconData icon, String label) {
+  static Widget _buildTopButton(BuildContext context, IconData icon, String label, {VoidCallback? onTap}) {
     return Container(
       margin: const EdgeInsets.only(right: 8),
       child: OutlinedButton.icon(
-        onPressed: () {},
+        onPressed: onTap ??
+            () => ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Coming soon')),
+                ),
         icon: Icon(icon, size: 18),
         label: Text(label),
         style: OutlinedButton.styleFrom(
