@@ -1,10 +1,11 @@
+import '../config/api_config.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class AuthService {
   // Change this to your computer's IP address when testing on a physical device
   // For emulator, localhost or 10.0.2.2 works
-  static const String baseUrl = 'http://localhost:3000/api';
+  static const String baseUrl = '$apiBaseUrl/api';
 
   // Register a new user
   static Future<Map<String, dynamic>> register(String email, String password) async {

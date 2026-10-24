@@ -1,10 +1,11 @@
+import '../config/api_config.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/food_item.dart';
 import '../models/meal_entry.dart';
 
 class NutritionService {
-  static const String baseUrl = 'http://localhost:3000/api';
+  static const String baseUrl = '$apiBaseUrl/api';
 
   // Get all dining halls
   static Future<List<String>> getDiningHalls() async {

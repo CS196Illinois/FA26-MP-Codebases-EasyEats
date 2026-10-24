@@ -1,3 +1,4 @@
+import '../config/api_config.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -66,7 +67,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://localhost:3000/api/user/$userId/change-password'),
+        Uri.parse('$apiBaseUrl/api/user/$userId/change-password'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'oldPassword': _currentPasswordController.text,

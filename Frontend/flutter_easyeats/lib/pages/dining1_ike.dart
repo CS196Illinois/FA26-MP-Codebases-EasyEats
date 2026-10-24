@@ -1,3 +1,4 @@
+import '../config/api_config.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -290,7 +291,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<Map<String, dynamic>> fetchRecommendedMenu() async {
     final uri = Uri.parse(
-      "http://localhost:3000/api/meal-plan?calories=600&dining_hall=Ike",
+      "$apiBaseUrl/api/meal-plan?calories=600&dining_hall=Ike",
     );
 
     final response = await http.get(uri);
