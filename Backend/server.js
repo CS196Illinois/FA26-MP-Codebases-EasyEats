@@ -327,7 +327,9 @@ app.get('/api/recommendations/:userId', (req, res) => {
 // ============ MEAL TRACKING ENDPOINTS ============
 
 // Initialize meal tracking database
-const mealTrackingDbPath = path.join(__dirname, 'data', 'meal_tracking.json');
+// MEAL_TRACKING_PATH lets tests use a temporary file instead of the real data
+const mealTrackingDbPath = process.env.MEAL_TRACKING_PATH ||
+    path.join(__dirname, 'data', 'meal_tracking.json');
 
 // Helper function to read meal tracking data
 function readMealTracking() {
@@ -473,12 +475,16 @@ app.get('/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Start server
-app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-    console.log(`Authentication endpoints available at:`);
-    console.log(`  POST http://localhost:${PORT}/api/auth/register`);
-    console.log(`  POST http://localhost:${PORT}/api/auth/login`);
-    console.log(`  PUT  http://localhost:${PORT}/api/user/:userId/profile`);
-    console.log(`  GET  http://localhost:${PORT}/api/user/:userId/profile`);
-});
+// Start server (only when run directly, so tests can import the app)
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`Server running on http://localhost:${PORT}`);
+        console.log(`Authentication endpoints available at:`);
+        console.log(`  POST http://localhost:${PORT}/api/auth/register`);
+        console.log(`  POST http://localhost:${PORT}/api/auth/login`);
+        console.log(`  PUT  http://localhost:${PORT}/api/user/:userId/profile`);
+        console.log(`  GET  http://localhost:${PORT}/api/user/:userId/profile`);
+    });
+}
+
+module.exports = { app, db };

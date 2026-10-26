@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/food_item.dart';
+import '../models/meal_entry.dart';
 import '../services/nutrition_service.dart';
 import '../services/user_service.dart';
 
@@ -140,9 +141,10 @@ class _DiningHallDetailPageState extends State<DiningHallDetailPage> {
     }
 
     try {
-      await NutritionService.logMeal(
+      final loggedFoods = List<FoodItem>.from(_selectedFoods);
+      final meal = await NutritionService.logMeal(
         _userId!,
-        _selectedFoods,
+        loggedFoods,
         mealType: _selectedMealType,
         diningHall: widget.diningHallName,
       );
@@ -150,8 +152,16 @@ class _DiningHallDetailPageState extends State<DiningHallDetailPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Logged ${_selectedFoods.length} items to $_selectedMealType'),
+            content: Text('Logged ${loggedFoods.length} items to $_selectedMealType'),
             backgroundColor: Colors.green,
+            duration: const Duration(seconds: 5),
+            // Without this, a snackbar with an action stays until tapped
+            persist: false,
+            action: SnackBarAction(
+              label: 'Undo',
+              textColor: Colors.white,
+              onPressed: () => _undoLogMeal(meal, loggedFoods),
+            ),
           ),
         );
 
@@ -164,6 +174,33 @@ class _DiningHallDetailPageState extends State<DiningHallDetailPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error logging meal: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _undoLogMeal(MealEntry meal, List<FoodItem> foods) async {
+    try {
+      await NutritionService.deleteMeal(_userId!, meal.id);
+
+      if (mounted) {
+        // Re-select the foods so the user can fix the meal and log it again
+        setState(() {
+          _selectedFoods
+            ..clear()
+            ..addAll(foods);
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Meal removed')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error undoing meal: $e'),
             backgroundColor: Colors.red,
           ),
         );
