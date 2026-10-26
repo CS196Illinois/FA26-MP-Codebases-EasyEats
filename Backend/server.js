@@ -327,7 +327,7 @@ app.get('/api/recommendations/:userId', (req, res) => {
 // ============ MEAL TRACKING ENDPOINTS ============
 
 // Initialize meal tracking database
-const mealTrackingDbPath = path.join(__dirname, 'data', 'meal_tracking.json');
+const mealTrackingDbPath = path.join(process.env.EASYEATS_DATA_DIR || path.join(__dirname, 'data'), 'meal_tracking.json');
 
 // Helper function to read meal tracking data
 function readMealTracking() {

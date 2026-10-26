@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/food_item.dart';
 import '../services/nutrition_service.dart';
+import '../services/meal_insights.dart';
 import '../services/user_service.dart';
 
 class DiningHallDetailPage extends StatefulWidget {
@@ -21,6 +22,8 @@ class _DiningHallDetailPageState extends State<DiningHallDetailPage> {
   List<FoodItem> _recommendations = [];
   List<FoodItem> _allFoods = [];
   final List<FoodItem> _selectedFoods = [];
+  // Lowercase names of the user's favorites, for the heart buttons
+  Set<String> _favoriteNames = {};
   String _selectedMealType = 'Lunch';
   int? _userId;
   int _targetCalories = 2000;
@@ -60,6 +63,7 @@ class _DiningHallDetailPageState extends State<DiningHallDetailPage> {
       await Future.wait([
         _loadRecommendations(),
         _loadAllFoods(),
+        _loadFavorites(),
       ]);
 
       setState(() {
@@ -113,6 +117,66 @@ class _DiningHallDetailPageState extends State<DiningHallDetailPage> {
         _allFoods = [];
         _error = '';
       });
+    }
+  }
+
+  Future<void> _loadFavorites() async {
+    try {
+      final favorites = await NutritionService.getFavorites(_userId!);
+      _setFavorites(favorites);
+    } catch (e) {
+      // Hearts just show as empty if favorites can't be loaded
+    }
+  }
+
+  void _setFavorites(List<dynamic> favorites) {
+    setState(() {
+      _favoriteNames =
+          favorites.map((f) => favoriteName(f).trim().toLowerCase()).toSet();
+    });
+  }
+
+  bool _isFavorite(FoodItem food) {
+    return _favoriteNames.contains(food.name.trim().toLowerCase());
+  }
+
+  Future<void> _toggleFavorite(FoodItem food) async {
+    final wasFavorite = _isFavorite(food);
+    try {
+      List<dynamic> favorites;
+      if (wasFavorite) {
+        // The server removes by position, so look it up in the current list
+        final current = await NutritionService.getFavorites(_userId!);
+        final index = current.indexWhere((f) =>
+            favoriteName(f).trim().toLowerCase() ==
+            food.name.trim().toLowerCase());
+        favorites = index >= 0
+            ? await NutritionService.removeFavorite(_userId!, index)
+            : current;
+      } else {
+        favorites = await NutritionService.addFavorite(_userId!, food);
+      }
+      _setFavorites(favorites);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(wasFavorite
+                ? 'Removed ${food.name} from favorites'
+                : 'Added ${food.name} to favorites'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error updating favorites: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -448,6 +512,18 @@ class _DiningHallDetailPageState extends State<DiningHallDetailPage> {
                                           ),
                                         ],
                                       ),
+                                    ),
+                                    IconButton(
+                                      icon: Icon(
+                                        _isFavorite(food)
+                                            ? Icons.favorite
+                                            : Icons.favorite_border,
+                                        color: Colors.red,
+                                      ),
+                                      tooltip: _isFavorite(food)
+                                          ? 'Remove from favorites'
+                                          : 'Add to favorites',
+                                      onPressed: () => _toggleFavorite(food),
                                     ),
                                   ],
                                 ),

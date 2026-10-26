@@ -198,4 +198,62 @@ class NutritionService {
       throw Exception('Network error: ${e.toString()}');
     }
   }
+
+  // Get the user's saved favorites (stored on their profile)
+  static Future<List<dynamic>> getFavorites(int userId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/user/$userId/profile'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data['favorites'] as List? ?? [];
+      } else {
+        throw Exception('Failed to load favorites');
+      }
+    } catch (e) {
+      throw Exception('Network error: ${e.toString()}');
+    }
+  }
+
+  // Save a food to favorites. The server ignores duplicates.
+  static Future<List<dynamic>> addFavorite(int userId, FoodItem food) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/user/$userId/favorites'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'foodItem': food.toJson()}),
+      );
+
+      final data = json.decode(response.body);
+      if (response.statusCode == 200) {
+        return data['favorites'] as List? ?? [];
+      } else {
+        throw Exception(data['error'] ?? 'Failed to add favorite');
+      }
+    } catch (e) {
+      throw Exception('Network error: ${e.toString()}');
+    }
+  }
+
+  // Remove a favorite by its position in the list from getFavorites()
+  static Future<List<dynamic>> removeFavorite(int userId, int index) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/user/$userId/favorites/$index'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      final data = json.decode(response.body);
+      if (response.statusCode == 200) {
+        return data['favorites'] as List? ?? [];
+      } else {
+        throw Exception(data['error'] ?? 'Failed to remove favorite');
+      }
+    } catch (e) {
+      throw Exception('Network error: ${e.toString()}');
+    }
+  }
 }

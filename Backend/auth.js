@@ -2,16 +2,15 @@ const fs = require('fs');
 const crypto = require('crypto');
 const path = require('path');
 
-// Database file path (JSON file)
-const DB_FILE = path.join(__dirname, 'data', 'users.json');
+// Database file path (JSON file). EASYEATS_DATA_DIR lets tests use a temp folder.
+const DATA_DIR = process.env.EASYEATS_DATA_DIR || path.join(__dirname, 'data');
+const DB_FILE = path.join(DATA_DIR, 'users.json');
 
 // Initialize database file if it doesn't exist
 function initializeDatabase() {
-    const dataDir = path.join(__dirname, 'data');
-
     // Create data directory if it doesn't exist
-    if (!fs.existsSync(dataDir)) {
-        fs.mkdirSync(dataDir, { recursive: true });
+    if (!fs.existsSync(DATA_DIR)) {
+        fs.mkdirSync(DATA_DIR, { recursive: true });
     }
 
     // Create users.json if it doesn't exist
@@ -217,7 +216,14 @@ function addFavorite(userId, foodItem, callback) {
         users[userIndex].favorites = [];
     }
 
-    users[userIndex].favorites.push(foodItem);
+    // Favorites can be food objects or plain strings; compare by dish name
+    const nameOf = item => String(typeof item === 'object' && item !== null ? item.name : item).trim().toLowerCase();
+    const favorites = users[userIndex].favorites;
+    if (favorites.some(f => nameOf(f) === nameOf(foodItem))) {
+        return callback(null, { message: 'Already in favorites', favorites });
+    }
+
+    favorites.push(foodItem);
     users[userIndex].updated_at = new Date().toISOString();
 
     if (writeUsers(users)) {
@@ -238,6 +244,11 @@ function removeFavorite(userId, foodItemIndex, callback) {
 
     if (!users[userIndex].favorites || users[userIndex].favorites.length === 0) {
         return callback({ error: 'No favorites to remove' }, null);
+    }
+
+    // splice() with NaN or a negative index would remove the wrong item
+    if (!Number.isInteger(foodItemIndex) || foodItemIndex < 0 || foodItemIndex >= users[userIndex].favorites.length) {
+        return callback({ error: 'Invalid favorite index' }, null);
     }
 
     users[userIndex].favorites.splice(foodItemIndex, 1);

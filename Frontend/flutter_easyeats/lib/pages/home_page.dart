@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dining_halls.dart' as dining_halls;
 import 'settings_page.dart';
+import 'favorites_page.dart';
+import 'history_page.dart';
 import '../services/nutrition_service.dart';
 import '../services/user_service.dart';
 import '../models/meal_entry.dart';
@@ -184,9 +186,17 @@ class _MainPageState extends State<MainPage> {
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
-                        _buildTopButton(Icons.favorite_border, "Favorites"),
+                        _buildTopButton(Icons.favorite_border, "Favorites", onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const FavoritesPage()),
+                          );
+                        }),
                         _buildTopButton(Icons.history, "History", onTap: () {
-                          // Navigate to history page - to be implemented
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const HistoryPage()),
+                          );
                         }),
                         _buildTopButton(Icons.refresh, "Refresh", onTap: _loadData),
                       ],
