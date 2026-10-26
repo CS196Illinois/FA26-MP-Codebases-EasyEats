@@ -4,6 +4,33 @@ import '../services/auth_service.dart';
 import '../services/user_service.dart';
 
 
+// Estimate a daily calorie target with the Mifflin-St Jeor equation,
+// assuming a lightly active lifestyle, then adjust for the user's goal
+int estimateCalories({
+  required String? goal,
+  required String? sex,
+  required int? age,
+  required double? heightFeet,
+  required double? heightInches,
+  required double? weight,
+}) {
+  final cm = ((heightFeet ?? 0) * 12 + (heightInches ?? 0)) * 2.54;
+  final kg = (weight ?? 0) * 0.453592;
+  final sexOffset = switch (sex) {
+    'Male' => 5,
+    'Female' => -161,
+    _ => -78, // 'Other': midpoint of the two
+  };
+  final bmr = 10 * kg + 6.25 * cm - 5 * (age ?? 0) + sexOffset;
+  final maintenance = bmr * 1.375;
+  final adjustment = switch (goal) {
+    'Losing weight' => -500,
+    'Gaining weight' => 300,
+    _ => 0,
+  };
+  return (maintenance + adjustment).round().clamp(1200, 4000);
+}
+
 class QuestionnaireScreen extends StatefulWidget {
   final int userId;
 
@@ -63,6 +90,17 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
     }
   }
 
+  int _estimatedCalories() {
+    return estimateCalories(
+      goal: goal,
+      sex: sex,
+      age: age,
+      heightFeet: heightFeet,
+      heightInches: heightInches,
+      weight: weight,
+    );
+  }
+
   Future<void> _submitQuestionnaire() async {
     final navigator = Navigator.of(context);
 
@@ -76,7 +114,7 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
       goal,
       age,
       sex,
-      calories,
+      calories ?? _estimatedCalories(),
     );
 
     setState(() {
@@ -135,9 +173,8 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
       case 2:
         return age != null && age! > 0;
       case 3:
-        return (heightFeet != null && heightFeet! > 0) ||
-               (heightInches != null && heightInches! > 0) &&
-               (weight != null && weight! > 0);
+        return ((heightFeet ?? 0) > 0 || (heightInches ?? 0) > 0) &&
+               (weight ?? 0) > 0;
       case 4:
         return true; // Calorie goal is optional
       default:
@@ -574,7 +611,7 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
               ),
               prefixIcon: const Icon(Icons.local_fire_department),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-              helperText: 'Leave blank if you\'re not sure',
+              helperText: 'Leave blank to use our estimate: ${_estimatedCalories()} kcal',
             ),
             onChanged: (val) {
               setState(() {
