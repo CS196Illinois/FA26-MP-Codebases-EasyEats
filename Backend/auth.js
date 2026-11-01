@@ -57,12 +57,18 @@ function verifyPassword(password, storedHash) {
     return hash === verifyHash;
 }
 
+// Emails are case-insensitive, so compare and store them in one canonical form
+function normalizeEmail(email) {
+    return String(email).trim().toLowerCase();
+}
+
 // Register new user
 function registerUser(email, password, callback) {
     const users = readUsers();
+    email = normalizeEmail(email);
 
     // Check if email already exists
-    if (users.find(u => u.email === email)) {
+    if (users.find(u => normalizeEmail(u.email) === email)) {
         return callback({ error: 'Email already exists' }, null);
     }
 
@@ -97,7 +103,8 @@ function registerUser(email, password, callback) {
 // Login user
 function loginUser(email, password, callback) {
     const users = readUsers();
-    const user = users.find(u => u.email === email);
+    email = normalizeEmail(email);
+    const user = users.find(u => normalizeEmail(u.email) === email);
 
     if (!user) {
         return callback({ error: 'Invalid email or password' }, null);
