@@ -106,7 +106,8 @@ app.get('/api/meal-plan', (req, res) => {
 
 // Authentication endpoints
 app.post('/api/auth/register', (req, res) => {
-    const { email, password } = req.body;
+    const { password } = req.body;
+    const email = typeof req.body.email === 'string' ? req.body.email.trim() : req.body.email;
 
     if (!email || !password) {
         return res.status(400).json({ error: 'Email and password are required' });
