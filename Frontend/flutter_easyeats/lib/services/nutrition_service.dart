@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'api_client.dart';
 import '../models/food_item.dart';
 import '../models/meal_entry.dart';
 
@@ -71,10 +72,7 @@ class NutritionService {
 
       uri = uri.replace(queryParameters: queryParams);
 
-      final response = await http.get(
-        uri,
-        headers: {'Content-Type': 'application/json'},
-      );
+      final response = await ApiClient.get(uri);
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -102,9 +100,8 @@ class NutritionService {
     String? diningHall,
   }) async {
     try {
-      final response = await http.post(
+      final response = await ApiClient.post(
         Uri.parse('$baseUrl/user/$userId/meals'),
-        headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'foods': foods.map((f) => f.toJson()).toList(),
           'meal_type': mealType ?? 'Snack',
@@ -140,10 +137,7 @@ class NutritionService {
 
       uri = uri.replace(queryParameters: queryParams);
 
-      final response = await http.get(
-        uri,
-        headers: {'Content-Type': 'application/json'},
-      );
+      final response = await ApiClient.get(uri);
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -160,9 +154,8 @@ class NutritionService {
   // Get today's nutrition totals
   static Future<Map<String, dynamic>> getTodayTotals(int userId) async {
     try {
-      final response = await http.get(
+      final response = await ApiClient.get(
         Uri.parse('$baseUrl/user/$userId/today-totals'),
-        headers: {'Content-Type': 'application/json'},
       );
 
       if (response.statusCode == 200) {
@@ -185,9 +178,8 @@ class NutritionService {
   // Delete a meal entry
   static Future<void> deleteMeal(int userId, int mealId) async {
     try {
-      final response = await http.delete(
+      final response = await ApiClient.delete(
         Uri.parse('$baseUrl/user/$userId/meals/$mealId'),
-        headers: {'Content-Type': 'application/json'},
       );
 
       if (response.statusCode != 200) {

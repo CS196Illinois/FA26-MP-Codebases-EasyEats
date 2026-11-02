@@ -85,9 +85,43 @@ The server will start on `http://localhost:3000`
   "age": 25,
   "sex": "Male",
   "calories": 2000,
+  "token": "9f2c...e81a",
   "message": "Login successful"
 }
 ```
+
+Register also returns a `token`, so a new user is signed in straight away.
+
+## Session tokens
+
+Every route under `/api/user/:userId/...` and `/api/recommendations/:userId`
+needs the token from login or register in this header:
+
+```
+Authorization: Bearer <token>
+```
+
+| Response | When |
+|---|---|
+| `401` `Not signed in` | No `Authorization` header |
+| `401` `Session expired. Please sign in again.` | Token is unknown, expired (7 days) or was logged out |
+| `403` `You can only access your own account` | Token belongs to a different user than `:userId` in the URL |
+
+How it works:
+- The token is 32 random bytes (`crypto.randomBytes`). Only its SHA-256 hash is
+  saved in `users.json` (under each user's `sessions`), so the file alone can't
+  be used to sign in.
+- `requireAuth` in `server.js` checks the token before the route runs.
+  It is mounted on `/api/user/:userId`, so new routes under that path are
+  protected automatically.
+- **Logout** (`POST /api/auth/logout`, with the header) deletes that token.
+- **Changing your password** keeps the current device signed in and ends every
+  other session.
+
+Menu routes (`/api/dining-halls`, `/api/meal-plan`, `/health`) stay public.
+
+In the app, `lib/services/api_client.dart` adds the header to every per-user
+request, and sends the user back to sign-in if the server replies `401`.
 
 **Response (Error - 401):**
 ```json
@@ -155,17 +189,28 @@ curl -X POST http://localhost:3000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"test@example.com","password":"password123"}'
 ```
+Copy the `token` from the response:
+```bash
+TOKEN=paste-token-here
+```
 
 ### Update profile:
 ```bash
 curl -X PUT http://localhost:3000/api/user/1/profile \
+  -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"goal":"Losing weight","age":25,"sex":"Male","calories":2000}'
 ```
 
 ### Get profile:
 ```bash
-curl http://localhost:3000/api/user/1/profile
+curl http://localhost:3000/api/user/1/profile -H "Authorization: Bearer $TOKEN"
+```
+Without the header this returns `401`. With another user's id it returns `403`.
+
+### Log out:
+```bash
+curl -X POST http://localhost:3000/api/auth/logout -H "Authorization: Bearer $TOKEN"
 ```
 
 ## Flutter Integration
@@ -192,6 +237,9 @@ static const String baseUrl = 'http://10.0.2.2:3000/api';
 - Passwords are never stored in plain text
 - Email validation on registration
 - Minimum password length of 6 characters
+- Random session tokens (stored hashed, expire after 7 days) checked on every per-user route
+- Users can only read or change their own data (`403` otherwise)
+- Logout and password change end sessions on the server
 
 ## File Structure
 
@@ -210,14 +258,14 @@ The API returns appropriate HTTP status codes:
 - `200` - Success (login, get profile, update profile)
 - `201` - Created (registration)
 - `400` - Bad Request (validation errors, duplicate email)
-- `401` - Unauthorized (invalid credentials)
+- `401` - Unauthorized (invalid credentials, or missing/expired token)
+- `403` - Forbidden (token belongs to a different user)
 - `404` - Not Found (user doesn't exist)
 
 ## Next Steps
 
 To enhance the authentication system, consider:
-1. Adding JWT tokens for session management
-2. Implementing password reset functionality
-3. Adding email verification
-4. Migrating from JSON file to a proper database (PostgreSQL, MongoDB)
-5. Adding rate limiting to prevent brute force attacks
+1. Implementing password reset functionality
+2. Adding email verification
+3. Migrating from JSON file to a proper database (PostgreSQL, MongoDB)
+4. Adding rate limiting to prevent brute force attacks

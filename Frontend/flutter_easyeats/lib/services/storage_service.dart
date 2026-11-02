@@ -5,13 +5,16 @@ class StorageService {
   static const String _userIdKey = 'user_id';
   static const String _userDataKey = 'user_data';
   static const String _loginTimeKey = 'login_time';
-  static const int _sessionDurationDays = 7; // Stay logged in for 7 days
+  static const String _tokenKey = 'session_token';
+  static const int _sessionDurationDays = 7; // Stay logged in for 7 days (matches the server)
 
   // Save user login session
-  static Future<void> saveUserSession(int userId, Map<String, dynamic> userData) async {
+  static Future<void> saveUserSession(
+      int userId, Map<String, dynamic> userData, String token) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_userIdKey, userId);
     await prefs.setString(_userDataKey, json.encode(userData));
+    await prefs.setString(_tokenKey, token);
     await prefs.setInt(_loginTimeKey, DateTime.now().millisecondsSinceEpoch);
   }
 
@@ -41,8 +44,10 @@ class StorageService {
 
     final userId = prefs.getInt(_userIdKey);
     final userDataString = prefs.getString(_userDataKey);
+    final token = prefs.getString(_tokenKey);
 
-    if (userId == null || userDataString == null) {
+    // Sessions saved before tokens existed have no token: sign in again
+    if (userId == null || userDataString == null || token == null) {
       return null;
     }
 
@@ -51,6 +56,7 @@ class StorageService {
       return {
         'userId': userId,
         'userData': userData,
+        'token': token,
       };
     } catch (e) {
       return null;
@@ -63,6 +69,7 @@ class StorageService {
     await prefs.remove(_userIdKey);
     await prefs.remove(_userDataKey);
     await prefs.remove(_loginTimeKey);
+    await prefs.remove(_tokenKey);
   }
 
   // Update stored user data (when profile is updated)

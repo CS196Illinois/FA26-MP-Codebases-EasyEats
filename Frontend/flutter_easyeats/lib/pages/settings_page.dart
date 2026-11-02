@@ -10,6 +10,7 @@ import 'favorites_page.dart';
 import 'about_page.dart';
 import 'help_support_page.dart';
 import 'privacy_policy_page.dart';
+import '../services/auth_service.dart';
 import '../services/user_service.dart';
 
 class SettingsPage extends StatelessWidget {
@@ -144,7 +145,8 @@ class SettingsPage extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: ElevatedButton(
                 onPressed: () async {
-                  // Clear user session from storage
+                  // End the session on the server, then clear it on this device
+                  await AuthService.logout();
                   await UserService.clearCurrentUser();
                   if (context.mounted) {
                     Navigator.pushReplacement(

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import '../services/auth_service.dart';
 import '../services/user_service.dart';
 
 class ChangePasswordPage extends StatefulWidget {
@@ -64,45 +63,27 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
       _isLoading = true;
     });
 
-    try {
-      final response = await http.post(
-        Uri.parse('http://localhost:3000/api/user/$userId/change-password'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'oldPassword': _currentPasswordController.text,
-          'newPassword': _newPasswordController.text,
-        }),
+    final result = await AuthService.changePassword(
+      userId,
+      _currentPasswordController.text,
+      _newPasswordController.text,
+    );
+
+    if (!mounted) return;
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    if (result['success']) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result['data']['message'] ?? 'Password changed successfully')),
       );
-
-      final data = json.decode(response.body);
-
-      setState(() {
-        _isLoading = false;
-      });
-
-      if (response.statusCode == 200) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Password changed successfully')),
-          );
-          Navigator.pop(context);
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(data['error'] ?? 'Failed to change password')),
-          );
-        }
-      }
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Network error: ${e.toString()}')),
-        );
-      }
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result['error'])),
+      );
     }
   }
 

@@ -1,9 +1,26 @@
 import 'package:flutter/material.dart';
 import 'pages/auth_screen.dart';
 import 'pages/home_page.dart';
+import 'services/api_client.dart';
 import 'services/user_service.dart';
 
+// Lets code outside a widget (ApiClient) navigate and show messages
+final navigatorKey = GlobalKey<NavigatorState>();
+final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+
 void main() {
+  // When the server rejects the saved token (expired, logged out elsewhere,
+  // or password changed on another device), go back to the sign-in screen.
+  ApiClient.onUnauthorized = () {
+    navigatorKey.currentState?.pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const AuthScreen()),
+      (route) => false,
+    );
+    scaffoldMessengerKey.currentState?.showSnackBar(
+      const SnackBar(content: Text('Your session has ended. Please sign in again.')),
+    );
+  };
+
   runApp(const MyApp());
 }
 
@@ -14,6 +31,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: "EasyEats",
+      navigatorKey: navigatorKey,
+      scaffoldMessengerKey: scaffoldMessengerKey,
       theme: ThemeData(primarySwatch: Colors.green),
       debugShowCheckedModeBanner: false,
       home: const SplashScreen(),

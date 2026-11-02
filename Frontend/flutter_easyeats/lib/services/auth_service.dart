@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'api_client.dart';
+import 'user_service.dart';
 
 class AuthService {
   // Change this to your computer's IP address when testing on a physical device
@@ -73,9 +75,8 @@ class AuthService {
       if (dietaryRestrictions != null) body['dietary_restrictions'] = dietaryRestrictions;
       if (notificationsEnabled != null) body['notifications_enabled'] = notificationsEnabled;
 
-      final response = await http.put(
+      final response = await ApiClient.put(
         Uri.parse('$baseUrl/user/$userId/profile'),
-        headers: {'Content-Type': 'application/json'},
         body: json.encode(body),
       );
 
@@ -94,9 +95,8 @@ class AuthService {
   // Get user profile
   static Future<Map<String, dynamic>> getProfile(int userId) async {
     try {
-      final response = await http.get(
+      final response = await ApiClient.get(
         Uri.parse('$baseUrl/user/$userId/profile'),
-        headers: {'Content-Type': 'application/json'},
       );
 
       final data = json.decode(response.body);
@@ -108,6 +108,53 @@ class AuthService {
       }
     } catch (e) {
       return {'success': false, 'error': 'Network error: ${e.toString()}'};
+    }
+  }
+
+  // Change password. The server keeps this device signed in and signs out
+  // every other device.
+  static Future<Map<String, dynamic>> changePassword(
+    int userId,
+    String oldPassword,
+    String newPassword,
+  ) async {
+    try {
+      final response = await ApiClient.post(
+        Uri.parse('$baseUrl/user/$userId/change-password'),
+        body: json.encode({
+          'oldPassword': oldPassword,
+          'newPassword': newPassword,
+        }),
+      );
+
+      final data = json.decode(response.body);
+
+      if (response.statusCode == 200) {
+        return {'success': true, 'data': data};
+      } else {
+        return {'success': false, 'error': data['error'] ?? 'Failed to change password'};
+      }
+    } catch (e) {
+      return {'success': false, 'error': 'Network error: ${e.toString()}'};
+    }
+  }
+
+  // Log out: tell the server to delete this device's token. Uses plain http
+  // (not ApiClient) because a 401 here just means the token was already gone.
+  static Future<void> logout() async {
+    final token = UserService.getToken();
+    if (token == null) return;
+
+    try {
+      await http.post(
+        Uri.parse('$baseUrl/auth/logout'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+    } catch (_) {
+      // Server unreachable: still sign out on this device
     }
   }
 }

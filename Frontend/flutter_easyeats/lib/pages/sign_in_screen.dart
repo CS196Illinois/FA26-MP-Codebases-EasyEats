@@ -48,7 +48,11 @@ class _SignInScreenState extends State<SignInScreen> {
     if (result['success']) {
       // Store user data (with persistent storage)
       final userId = result['data']['id'];
-      await UserService.setCurrentUser(userId, result['data']);
+      await UserService.setCurrentUser(
+        userId,
+        result['data'],
+        token: result['data']['token'],
+      );
 
       // Navigate to home page
       if (mounted) {

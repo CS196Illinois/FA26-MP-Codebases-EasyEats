@@ -3,15 +3,28 @@ import 'storage_service.dart';
 class UserService {
   static int? _currentUserId;
   static Map<String, dynamic>? _currentUserData;
+  static String? _token;
 
-  // Set current user and save to persistent storage
-  static Future<void> setCurrentUser(int userId, Map<String, dynamic>? userData) async {
+  // Set current user and save to persistent storage.
+  // Pass [token] after sign-in or sign-up. Leave it out when only the
+  // profile data changed, and the existing token is kept.
+  static Future<void> setCurrentUser(
+    int userId,
+    Map<String, dynamic>? userData, {
+    String? token,
+  }) async {
     _currentUserId = userId;
+    if (token != null) _token = token;
+
+    // Keep the token out of the profile data so it is only stored once
+    if (userData != null) {
+      userData = Map<String, dynamic>.of(userData)..remove('token');
+    }
     _currentUserData = userData;
 
     // Save to persistent storage
-    if (userData != null) {
-      await StorageService.saveUserSession(userId, userData);
+    if (userData != null && _token != null) {
+      await StorageService.saveUserSession(userId, userData, _token!);
     }
   }
 
@@ -22,6 +35,7 @@ class UserService {
     if (session != null) {
       _currentUserId = session['userId'];
       _currentUserData = session['userData'];
+      _token = session['token'];
       return true;
     }
 
@@ -36,15 +50,21 @@ class UserService {
     return _currentUserData;
   }
 
+  // The session token sent to the backend with every request
+  static String? getToken() {
+    return _token;
+  }
+
   // Clear current user and remove from storage
   static Future<void> clearCurrentUser() async {
     _currentUserId = null;
     _currentUserData = null;
+    _token = null;
     await StorageService.clearSession();
   }
 
   static bool isLoggedIn() {
-    return _currentUserId != null;
+    return _currentUserId != null && _token != null;
   }
 
   // Get current user with ID and data combined
@@ -58,11 +78,7 @@ class UserService {
     }
 
     // Try to load from storage
-    final session = await StorageService.getSavedSession();
-    if (session != null) {
-      _currentUserId = session['userId'];
-      _currentUserData = session['userData'];
-
+    if (await loadSavedSession()) {
       return {
         'id': _currentUserId,
         ..._currentUserData!,

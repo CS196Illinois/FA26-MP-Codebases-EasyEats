@@ -38,8 +38,8 @@ flutter run -d linux               # or: -d chrome, -d macos, -d windows, or an 
 ```
 
 The API base URL is hard-coded to `http://localhost:3000` in
-`lib/services/auth_service.dart`, `lib/services/nutrition_service.dart`,
-`lib/pages/change_password_page.dart` and `lib/pages/dining1_ike.dart`.
+`lib/services/auth_service.dart`, `lib/services/nutrition_service.dart` and
+`lib/pages/dining1_ike.dart`.
 On an **Android emulator** change it to `http://10.0.2.2:3000`; on a physical phone use
 your computer's LAN IP.
 
@@ -77,4 +77,5 @@ WebScraping/, Research/   earlier experiments
 *.xlsx, *.csv (root)      raw scrape exports
 ```
 
-API reference: [`API_HANDBOOK.md`](API_HANDBOOK.md).
+API reference: [`API_HANDBOOK.md`](API_HANDBOOK.md). Per-user routes need a session
+token from login; see [`Backend/AUTH_README.md`](../Backend/AUTH_README.md#session-tokens).

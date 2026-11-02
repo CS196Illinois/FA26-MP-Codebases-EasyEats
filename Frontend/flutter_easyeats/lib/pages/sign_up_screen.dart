@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'questionnaire_screen.dart';
 import '../services/auth_service.dart';
+import '../services/user_service.dart';
 
 
 class SignUpScreen extends StatefulWidget {
@@ -64,8 +65,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
     });
 
     if (result['success']) {
-      // Store user ID for later use
+      // The server signs new users in straight away. Save the session so the
+      // questionnaire can save their profile.
       final userId = result['data']['id'];
+      await UserService.setCurrentUser(
+        userId,
+        result['data'],
+        token: result['data']['token'],
+      );
 
       // Navigate to questionnaire with user ID
       if (mounted) {
