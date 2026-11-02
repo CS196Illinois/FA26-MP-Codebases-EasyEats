@@ -17,6 +17,40 @@ const db = new sqlite3.Database(dbPath);
 app.use(cors());
 app.use(express.json());
 
+// ============ AUTHENTICATION MIDDLEWARE ============
+//
+// Runs before any route that belongs to one user. It checks the
+// "Authorization: Bearer <token>" header and:
+//   - 401 Unauthorized if the token is missing, unknown or expired
+//   - 403 Forbidden    if the token belongs to a different user than the
+//                      :userId in the URL (stops user 1 reading user 2's data)
+// If the check passes, req.userId is the signed-in user and req.token is
+// their token.
+function requireAuth(req, res, next) {
+    const header = req.headers.authorization || '';
+    const [scheme, token] = header.split(' ');
+
+    if (scheme !== 'Bearer' || !token) {
+        return res.status(401).json({ error: 'Not signed in' });
+    }
+
+    const userId = auth.authenticateToken(token);
+    if (userId === null) {
+        return res.status(401).json({ error: 'Session expired. Please sign in again.' });
+    }
+
+    if (req.params.userId !== undefined && parseInt(req.params.userId) !== userId) {
+        return res.status(403).json({ error: 'You can only access your own account' });
+    }
+
+    req.userId = userId;
+    req.token = token;
+    next();
+}
+
+// Every /api/user/:userId/... route is protected, including any added later
+app.use('/api/user/:userId', requireAuth);
+
 // API Endpoint
 app.get('/api/meal-plan', (req, res) => {
     const { calories, dining_hall, meal_type } = req.query;
@@ -146,6 +180,16 @@ app.post('/api/auth/login', (req, res) => {
     });
 });
 
+// Log out: the token in the header stops working immediately
+app.post('/api/auth/logout', requireAuth, (req, res) => {
+    auth.revokeSession(req.token, (err, result) => {
+        if (err) {
+            return res.status(500).json(err);
+        }
+        res.json(result);
+    });
+});
+
 app.put('/api/user/:userId/profile', (req, res) => {
     const userId = parseInt(req.params.userId);
     const profileData = req.body;
@@ -181,7 +225,7 @@ app.post('/api/user/:userId/change-password', (req, res) => {
         return res.status(400).json({ error: 'New password must be at least 6 characters' });
     }
 
-    auth.changePassword(userId, oldPassword, newPassword, (err, result) => {
+    auth.changePassword(userId, oldPassword, newPassword, req.token, (err, result) => {
         if (err) {
             return res.status(400).json(err);
         }
@@ -266,7 +310,7 @@ app.get('/api/dining-halls/:hall/foods', (req, res) => {
 });
 
 // Get recommended foods for user based on goals
-app.get('/api/recommendations/:userId', (req, res) => {
+app.get('/api/recommendations/:userId', requireAuth, (req, res) => {
     const userId = parseInt(req.params.userId);
     const { dining_hall, meal_type } = req.query;
 

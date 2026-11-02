@@ -57,6 +57,68 @@ function verifyPassword(password, storedHash) {
     return hash === verifyHash;
 }
 
+// ============ SESSION TOKENS ============
+//
+// On login or register the server creates a random token and gives it to the
+// app. The app sends it back on every request in the header
+// "Authorization: Bearer <token>", and the server uses it to work out who is
+// asking. Only a SHA-256 hash of each token is saved in users.json, so anyone
+// who reads that file still can't use the tokens in it.
+
+const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 7 days, same as the app
+
+function hashToken(token) {
+    return crypto.createHash('sha256').update(token).digest('hex');
+}
+
+// Drop expired sessions so the list doesn't grow forever
+function activeSessions(user) {
+    const now = Date.now();
+    return (user.sessions || []).filter(s => new Date(s.expires_at).getTime() > now);
+}
+
+// Create a session for a user (already loaded in `users`) and return the raw token.
+// The caller is responsible for saving `users` afterwards.
+function createSession(user) {
+    const token = crypto.randomBytes(32).toString('hex');
+    user.sessions = activeSessions(user);
+    user.sessions.push({
+        token_hash: hashToken(token),
+        created_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + SESSION_DURATION_MS).toISOString()
+    });
+    return token;
+}
+
+// Returns the id of the user who owns this token, or null if the token is
+// unknown or expired.
+function authenticateToken(token) {
+    if (!token) return null;
+    const tokenHash = hashToken(token);
+    const users = readUsers();
+    const user = users.find(u => activeSessions(u).some(s => s.token_hash === tokenHash));
+    return user ? user.id : null;
+}
+
+// Log out: delete this one token so it stops working
+function revokeSession(token, callback) {
+    const tokenHash = hashToken(token);
+    const users = readUsers();
+    const user = users.find(u => (u.sessions || []).some(s => s.token_hash === tokenHash));
+
+    if (!user) {
+        return callback(null, { message: 'Logged out' });
+    }
+
+    user.sessions = activeSessions(user).filter(s => s.token_hash !== tokenHash);
+
+    if (writeUsers(users)) {
+        callback(null, { message: 'Logged out' });
+    } else {
+        callback({ error: 'Failed to log out' }, null);
+    }
+}
+
 // Register new user
 function registerUser(email, password, callback) {
     const users = readUsers();
@@ -78,15 +140,19 @@ function registerUser(email, password, callback) {
         calories: null,
         dietary_restrictions: [],
         notifications_enabled: true,
-        favorites: []
+        favorites: [],
+        sessions: []
     };
 
+    // Sign the new user in straight away so the questionnaire can save their profile
+    const token = createSession(newUser);
     users.push(newUser);
 
     if (writeUsers(users)) {
         callback(null, {
             id: newUser.id,
             email: newUser.email,
+            token: token,
             message: 'User registered successfully'
         });
     } else {
@@ -107,6 +173,11 @@ function loginUser(email, password, callback) {
         return callback({ error: 'Invalid email or password' }, null);
     }
 
+    const token = createSession(user);
+    if (!writeUsers(users)) {
+        return callback({ error: 'Failed to start session' }, null);
+    }
+
     callback(null, {
         id: user.id,
         email: user.email,
@@ -114,6 +185,7 @@ function loginUser(email, password, callback) {
         age: user.age,
         sex: user.sex,
         calories: user.calories,
+        token: token,
         message: 'Login successful'
     });
 }
@@ -179,8 +251,10 @@ function getUserProfile(userId, callback) {
     });
 }
 
-// Change password
-function changePassword(userId, oldPassword, newPassword, callback) {
+// Change password. `currentToken` is the token of the device making the change:
+// that device stays signed in, and every other session is ended, so anyone who
+// stole the old password (or a token) is kicked out.
+function changePassword(userId, oldPassword, newPassword, currentToken, callback) {
     const users = readUsers();
     const userIndex = users.findIndex(u => u.id === userId);
 
@@ -197,8 +271,12 @@ function changePassword(userId, oldPassword, newPassword, callback) {
     users[userIndex].password_hash = hashPassword(newPassword);
     users[userIndex].updated_at = new Date().toISOString();
 
+    const currentHash = hashToken(currentToken);
+    users[userIndex].sessions = activeSessions(users[userIndex])
+        .filter(s => s.token_hash === currentHash);
+
     if (writeUsers(users)) {
-        callback(null, { message: 'Password changed successfully' });
+        callback(null, { message: 'Password changed successfully. Other devices have been signed out.' });
     } else {
         callback({ error: 'Failed to change password' }, null);
     }
@@ -260,5 +338,7 @@ module.exports = {
     getUserProfile,
     changePassword,
     addFavorite,
-    removeFavorite
+    removeFavorite,
+    authenticateToken,
+    revokeSession
 };
