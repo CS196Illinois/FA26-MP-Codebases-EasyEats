@@ -25,6 +25,7 @@ class _DiningHallDetailPageState extends State<DiningHallDetailPage> {
   int? _userId;
   int _targetCalories = 2000;
   String _userGoal = '';
+  String? _ranking;
   String _error = '';
   String _searchQuery = '';
 
@@ -83,6 +84,7 @@ class _DiningHallDetailPageState extends State<DiningHallDetailPage> {
 
       setState(() {
         _recommendations = result['recommendations'];
+        _ranking = result['ranking'];
         if (_recommendations.isEmpty) {
           _error = '';
         }
@@ -125,6 +127,22 @@ class _DiningHallDetailPageState extends State<DiningHallDetailPage> {
         _selectedFoods.add(food);
       }
     });
+  }
+
+  // Explains how the backend ranked the recommendations for this user's goal
+  String? get _rankingDescription {
+    switch (_ranking) {
+      case 'lose':
+        return 'Recommended: high protein, low calorie';
+      case 'gain':
+        return 'Recommended: calorie- and protein-dense';
+      case 'fit':
+        return 'Recommended: balanced protein, carbs, and fat';
+      case 'default':
+        return 'Goal not recognized, showing high-protein foods';
+      default:
+        return null;
+    }
   }
 
   bool _isFoodSelected(FoodItem food) {
@@ -312,9 +330,19 @@ class _DiningHallDetailPageState extends State<DiningHallDetailPage> {
                   Icon(Icons.track_changes, color: Colors.blue.shade700, size: 20),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Text(
-                      'Goal: $_userGoal • ${(_targetCalories / 3).toInt()} cal per meal',
-                      style: TextStyle(fontSize: 12, color: Colors.blue.shade900),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Goal: $_userGoal • ${(_targetCalories / 3).toInt()} cal per meal',
+                          style: TextStyle(fontSize: 12, color: Colors.blue.shade900),
+                        ),
+                        if (_rankingDescription != null)
+                          Text(
+                            _rankingDescription!,
+                            style: TextStyle(fontSize: 11, color: Colors.blue.shade700),
+                          ),
+                      ],
                     ),
                   ),
                 ],

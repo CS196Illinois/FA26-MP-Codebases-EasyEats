@@ -3,6 +3,7 @@ const cors = require('cors');
 const { spawn } = require('child_process');
 const path = require('path');
 const auth = require('./auth');
+const { getRanking, buildRecommendationQuery } = require('./recommendations');
 const sqlite3 = require('sqlite3').verbose();
 const fs = require('fs');
 
@@ -282,32 +283,9 @@ app.get('/api/recommendations/:userId', (req, res) => {
 
         const targetCaloriesPerMeal = Math.floor((user.calories || 2000) / 3);
 
-        // Get foods from the dining hall
-        let query = `
-            SELECT DISTINCT name, category, serving_size, calories, protein,
-                   total_fat, total_carbohydrate, dietary_fiber, sugars, sodium,
-                   (protein * 4.0 / NULLIF(calories, 0)) as protein_ratio,
-                   (total_fat * 9.0 / NULLIF(calories, 0)) as fat_ratio
-            FROM nutrition_data
-            WHERE dining_hall LIKE ?
-            AND calories > 0
-        `;
-        const params = [`%${dining_hall}%`];
-
-        if (meal_type) {
-            query += ` AND meal_type = ?`;
-            params.push(meal_type);
-        }
-
-        // Score foods based on nutrition
-        query += `
-            GROUP BY name
-            ORDER BY
-                (protein * 4.0 / NULLIF(calories, 0)) DESC,
-                (total_fat * 9.0 / NULLIF(calories, 0)) ASC,
-                dietary_fiber DESC
-            LIMIT 20
-        `;
+        // Rank the dining hall's foods for the user's goal
+        const ranking = getRanking(user.goal);
+        const { query, params } = buildRecommendationQuery(dining_hall, meal_type, ranking);
 
         db.all(query, params, (err, foods) => {
             if (err) {
@@ -318,6 +296,7 @@ app.get('/api/recommendations/:userId', (req, res) => {
                 recommendations: foods,
                 user_target_calories: targetCaloriesPerMeal,
                 goal: user.goal,
+                ranking: ranking,
                 count: foods.length
             });
         });

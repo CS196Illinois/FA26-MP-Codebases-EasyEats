@@ -84,6 +84,7 @@ class NutritionService {
               .toList(),
           'user_target_calories': data['user_target_calories'],
           'goal': data['goal'],
+          'ranking': data['ranking'],
           'count': data['count'],
         };
       } else {
