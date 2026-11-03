@@ -151,6 +151,62 @@
         "carbs": 10,
         "fiber": 2
       }
+    },
+    {
+      "id": 1793594913220,
+      "user_id": 2,
+      "meal_type": "Lunch",
+      "dining_hall": "ISR",
+      "consumed_at": "2026-11-01T22:48:33.194",
+      "foods": [
+        {
+          "name": "Halal Diced Roasted Chicken Breast",
+          "category": "Proteins",
+          "serving_size": "Cup (120g)",
+          "calories": 140,
+          "protein": 30,
+          "total_fat": 3,
+          "total_carbohydrate": 0,
+          "dietary_fiber": 0,
+          "sugars": 0,
+          "sodium": 0.35
+        }
+      ],
+      "totals": {
+        "calories": 140,
+        "protein": 30,
+        "fat": 3,
+        "carbs": 0,
+        "fiber": 0
+      }
+    },
+    {
+      "id": 1793658003935,
+      "user_id": 4,
+      "meal_type": "Lunch",
+      "dining_hall": "ISR",
+      "consumed_at": "2026-11-02T16:20:03.926",
+      "foods": [
+        {
+          "name": "Halal Diced Roasted Chicken Breast",
+          "category": "Proteins",
+          "serving_size": "Cup (120g)",
+          "calories": 140,
+          "protein": 30,
+          "total_fat": 3,
+          "total_carbohydrate": 0,
+          "dietary_fiber": 0,
+          "sugars": 0,
+          "sodium": 0.35
+        }
+      ],
+      "totals": {
+        "calories": 140,
+        "protein": 30,
+        "fat": 3,
+        "carbs": 0,
+        "fiber": 0
+      }
     }
   ]
 }

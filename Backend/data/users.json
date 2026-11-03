@@ -10,6 +10,112 @@
       "sex": "Male",
       "calories": 2500,
       "updated_at": "2025-11-25T18:38:25.245Z"
+    },
+    {
+      "id": 2,
+      "email": "bczapla2@illinois.edu",
+      "password_hash": "a67368e7b7b2c859dd373d2ff83bf506:631eac3ec5dd006ccfdc3f656e92bbce406306a04ce44d59e95ceeea536ad2d9afaf738e2fb27d824ab8e8e6f8ce904083d138d1a1d31e3083f3e122b456c582",
+      "created_at": "2026-10-28T02:47:05.643Z",
+      "goal": "Becoming fit",
+      "age": 18,
+      "sex": "Male",
+      "calories": null,
+      "dietary_restrictions": [],
+      "notifications_enabled": true,
+      "favorites": [],
+      "updated_at": "2026-10-28T02:47:32.133Z"
+    },
+    {
+      "id": 3,
+      "email": "67@gmail.com",
+      "password_hash": "f8231a92a271fcfd191d6b843037d94a:65f909489ace1c2cd2eff157536d367eecbe11bb2fd3ed556c9a45371f935f041aba246308da37be7a5c8d55c3934d1f2423b6d7998904689cc328ff3c3917fa",
+      "created_at": "2026-11-02T04:51:00.906Z",
+      "goal": "Losing weight",
+      "age": 67,
+      "sex": "Other",
+      "calories": 676767,
+      "dietary_restrictions": [],
+      "notifications_enabled": true,
+      "favorites": [],
+      "updated_at": "2026-11-03T01:43:49.366Z"
+    },
+    {
+      "id": 4,
+      "email": "676767@gmail.com",
+      "password_hash": "6c49828b23f6a866cac23b5e81988507:e67dbae60a644da07f582baae4772fdb711ce32538a670e5397752bbfe151875c846864f7182d2fd049b975e954ccfbf6403cbf5df6e4df322d3adc1d588e761",
+      "created_at": "2026-11-02T22:18:38.062Z",
+      "goal": "Gaining weight",
+      "age": 676767,
+      "sex": "Male",
+      "calories": null,
+      "dietary_restrictions": [],
+      "notifications_enabled": true,
+      "favorites": [],
+      "updated_at": "2026-11-02T22:19:16.235Z"
+    },
+    {
+      "id": 5,
+      "email": "idkman@gmail.com",
+      "password_hash": "cf0df8c041dd08ce2c336230b67caa09:13354fb6d00671f28b65006fd4946c0c601e4d11d1fdcb1881c9eb09bc772b00e6e8065e2ef654aca10a76fa8a61e0a5e9a9c38252d2dd10f4f404b457ced778",
+      "created_at": "2026-11-03T01:33:51.437Z",
+      "goal": "Gaining weight",
+      "age": 67,
+      "sex": "Female",
+      "calories": null,
+      "dietary_restrictions": [],
+      "notifications_enabled": true,
+      "favorites": [],
+      "updated_at": "2026-11-03T01:34:16.762Z"
+    },
+    {
+      "id": 6,
+      "email": "wwwcr7@gmail.com",
+      "password_hash": "eed6d1d53f2c7ba51b51cb9fef112995:637c969642e4ddcbd136f8a1a718114559f10020ca68c1c06316e0e65f34be81c1f8db51dcf338dcd1508e2cf9756baed0c4a86071420f21cf3c119f171f6aad",
+      "created_at": "2026-11-03T01:45:35.800Z",
+      "goal": "Gaining weight",
+      "age": 34,
+      "sex": "Other",
+      "calories": null,
+      "dietary_restrictions": [],
+      "notifications_enabled": true,
+      "favorites": [
+        "Halal Diced Roasted Chicken Breast"
+      ],
+      "updated_at": "2026-11-03T01:47:59.871Z"
+    },
+    {
+      "id": 7,
+      "email": "abc123@gmail.com",
+      "password_hash": "f4080c71296f1a3dd646a688bf7b9557:0cba27574f1c59f55c21c1cb39e293a51afcf847148d40b47f6ef3c476e9c223e42d86ce410fa3533b8e20eeb1eb6c1a4581147155dadab398417a48404a8f34",
+      "created_at": "2026-11-03T01:52:54.164Z",
+      "goal": "Gaining weight",
+      "age": 56,
+      "sex": "Female",
+      "calories": null,
+      "dietary_restrictions": [],
+      "notifications_enabled": true,
+      "favorites": [
+        "Smoked Salmon"
+      ],
+      "updated_at": "2026-11-03T01:59:01.671Z"
+    },
+    {
+      "id": 8,
+      "email": "45@gmail.com",
+      "password_hash": "14e78174cee65e3e46c91f6c95228d43:01a00c12356c928c77b04a10d303e526c977e509e660dad303367613bf826ee7f100e7530909c0f34f43707974df3d6d8c26dedd1a92a315311b87767924d071",
+      "created_at": "2026-11-03T02:03:47.218Z",
+      "goal": "Losing weight",
+      "age": 54,
+      "sex": "Male",
+      "calories": null,
+      "dietary_restrictions": [],
+      "notifications_enabled": true,
+      "favorites": [
+        "Halal Greek Chicken Breast",
+        "Smoked Salmon",
+        "Steamed Broccoli Florets"
+      ],
+      "updated_at": "2026-11-03T02:06:40.641Z"
     }
   ]
 }
