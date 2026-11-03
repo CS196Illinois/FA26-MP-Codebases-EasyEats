@@ -299,13 +299,31 @@ app.get('/api/recommendations/:userId', (req, res) => {
             params.push(meal_type);
         }
 
-        // Score foods based on nutrition
-        query += `
-            GROUP BY name
-            ORDER BY
+        // Recommend actual dishes, not condiments or add-ons
+        query += ` AND category NOT IN ('Dressings & Condiments', 'Toppings', 'Sauces', 'Cheeses')`;
+
+        // Score foods based on the user's goal
+        let orderBy;
+        if (user.goal === 'Losing weight') {
+            // Lowest-calorie dishes first (skipping near-zero items), then the most protein
+            query += ` AND calories >= 50`;
+            orderBy = `calories ASC, protein DESC`;
+        } else if (user.goal === 'Gaining weight') {
+            // Highest-calorie dishes that still fit in one meal, then the most protein
+            query += ` AND calories <= ?`;
+            params.push(targetCaloriesPerMeal);
+            orderBy = `calories DESC, protein DESC`;
+        } else {
+            // 'Becoming fit' or no goal: lean, high-protein, high-fiber foods
+            orderBy = `
                 (protein * 4.0 / NULLIF(calories, 0)) DESC,
                 (total_fat * 9.0 / NULLIF(calories, 0)) ASC,
-                dietary_fiber DESC
+                dietary_fiber DESC`;
+        }
+
+        query += `
+            GROUP BY name
+            ORDER BY ${orderBy}
             LIMIT 20
         `;
 
