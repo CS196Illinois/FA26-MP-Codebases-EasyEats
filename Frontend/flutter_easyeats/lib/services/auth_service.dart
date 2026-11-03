@@ -110,4 +110,45 @@ class AuthService {
       return {'success': false, 'error': 'Network error: ${e.toString()}'};
     }
   }
+
+  // Add a food to the user's favorites. On success, 'favorites' is the updated list.
+  static Future<Map<String, dynamic>> addFavorite(int userId, String foodName) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/user/$userId/favorites'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'foodItem': foodName}),
+      );
+
+      final data = json.decode(response.body);
+
+      if (response.statusCode == 200) {
+        return {'success': true, 'favorites': data['favorites'] ?? []};
+      } else {
+        return {'success': false, 'error': data['error'] ?? 'Failed to add favorite'};
+      }
+    } catch (e) {
+      return {'success': false, 'error': 'Network error: ${e.toString()}'};
+    }
+  }
+
+  // Remove the favorite at [index]. On success, 'favorites' is the updated list.
+  static Future<Map<String, dynamic>> removeFavorite(int userId, int index) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/user/$userId/favorites/$index'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      final data = json.decode(response.body);
+
+      if (response.statusCode == 200) {
+        return {'success': true, 'favorites': data['favorites'] ?? []};
+      } else {
+        return {'success': false, 'error': data['error'] ?? 'Failed to remove favorite'};
+      }
+    } catch (e) {
+      return {'success': false, 'error': 'Network error: ${e.toString()}'};
+    }
+  }
 }

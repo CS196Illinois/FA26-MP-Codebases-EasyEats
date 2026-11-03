@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/food_item.dart';
 import '../services/nutrition_service.dart';
 import '../services/user_service.dart';
+import '../services/auth_service.dart';
 
 class DiningHallDetailPage extends StatefulWidget {
   final String diningHallName;
@@ -21,6 +22,8 @@ class _DiningHallDetailPageState extends State<DiningHallDetailPage> {
   List<FoodItem> _recommendations = [];
   List<FoodItem> _allFoods = [];
   final List<FoodItem> _selectedFoods = [];
+  // The user's favorites as saved on the backend (food names).
+  List<String> _favorites = [];
   String _selectedMealType = 'Lunch';
   int? _userId;
   int _targetCalories = 2000;
@@ -60,6 +63,7 @@ class _DiningHallDetailPageState extends State<DiningHallDetailPage> {
       await Future.wait([
         _loadRecommendations(),
         _loadAllFoods(),
+        _loadFavorites(),
       ]);
 
       setState(() {
@@ -131,6 +135,50 @@ class _DiningHallDetailPageState extends State<DiningHallDetailPage> {
     return _selectedFoods.any((f) => f.name == food.name);
   }
 
+  // Favorites are optional, so a failure here doesn't stop the menu from loading.
+  Future<void> _loadFavorites() async {
+    final result = await AuthService.getProfile(_userId!);
+    if (result['success']) {
+      _favorites = _toNames(result['data']['favorites']);
+    }
+  }
+
+  List<String> _toNames(dynamic favorites) {
+    return ((favorites ?? []) as List).map((f) => f.toString()).toList();
+  }
+
+  bool _isFavorite(FoodItem food) => _favorites.contains(food.name);
+
+  Future<void> _toggleFavorite(FoodItem food) async {
+    final wasFavorite = _isFavorite(food);
+    final result = wasFavorite
+        ? await AuthService.removeFavorite(_userId!, _favorites.indexOf(food.name))
+        : await AuthService.addFavorite(_userId!, food.name);
+
+    if (!mounted) return;
+
+    if (result['success']) {
+      setState(() {
+        _favorites = _toNames(result['favorites']);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(wasFavorite
+              ? 'Removed ${food.name} from favorites'
+              : 'Added ${food.name} to favorites'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error updating favorites: ${result['error']}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   Future<void> _logMeal() async {
     if (_selectedFoods.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -173,15 +221,20 @@ class _DiningHallDetailPageState extends State<DiningHallDetailPage> {
 
   List<FoodItem> get _filteredFoods {
     final foods = _showRecommendations ? _recommendations : _allFoods;
+    final query = _searchQuery.toLowerCase();
 
-    if (_searchQuery.isEmpty) {
-      return foods;
-    }
+    final matches = _searchQuery.isEmpty
+        ? foods
+        : foods.where((food) {
+            return food.name.toLowerCase().contains(query) ||
+                   (food.category?.toLowerCase().contains(query) ?? false);
+          }).toList();
 
-    return foods.where((food) {
-      return food.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-             (food.category?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false);
-    }).toList();
+    // Favorites go first. Both groups keep their original order.
+    return [
+      ...matches.where(_isFavorite),
+      ...matches.where((food) => !_isFavorite(food)),
+    ];
   }
 
   double get _selectedTotalCalories {
@@ -448,6 +501,18 @@ class _DiningHallDetailPageState extends State<DiningHallDetailPage> {
                                           ),
                                         ],
                                       ),
+                                    ),
+                                    IconButton(
+                                      icon: Icon(
+                                        _isFavorite(food)
+                                            ? Icons.favorite
+                                            : Icons.favorite_border,
+                                        color: Colors.red,
+                                      ),
+                                      tooltip: _isFavorite(food)
+                                          ? 'Remove from favorites'
+                                          : 'Add to favorites',
+                                      onPressed: () => _toggleFavorite(food),
                                     ),
                                   ],
                                 ),
