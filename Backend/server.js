@@ -49,7 +49,7 @@ app.get('/api/meal-plan', (req, res) => {
 
     // Spawn Python process
     // Note: Using 'python3' - make sure it's in the path
-    const pythonProcess = spawn('python3', args);
+    const pythonProcess = spawn(process.platform === 'win32' ? 'python' : 'python', args); 
 
     let dataString = '';
     let errorString = '';
